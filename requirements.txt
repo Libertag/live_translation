@@ -1,0 +1,5 @@
+numpy>=1.20.0
+sounddevice>=0.4.2
+silero-vad>=0.0.3
+moonshine-onnx>=0.0.1
+tkinter>=8.6
