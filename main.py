@@ -12,7 +12,7 @@ config.gui_queue = Queue()
 config.stop_event = threading.Event()
 
 # Теперь импортируем модули, использующие эти переменные
-from gui import SettingsDialog, CaptionGUI
+from gui_new import SettingsDialog, CaptionGUI
 from audio import audio_processing
 
 

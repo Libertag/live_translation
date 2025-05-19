@@ -132,8 +132,6 @@ def audio_processing(device_id, model_name="moonshine/base", translator_settings
                 except Empty:
                     continue
 
-                if status:
-                    print(status)
 
                 # Добавление нового блока данных в буфер речи
                 speech = np.concatenate((speech, chunk))
