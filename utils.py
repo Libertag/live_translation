@@ -63,8 +63,11 @@ def print_captions(text, caption_cache):
     """
     # Объединение кэшированных субтитров и текущего текста
     full_text = " ".join(caption_cache + [text])
-    gui_queue.put(full_text)
 
+    # Обработка знаков конца предложения - добавление переноса строки
+    full_text = full_text.replace(". ", ".\n").replace("! ", "!\n").replace("? ", "?\n")
+
+    gui_queue.put(full_text)
 
 def soft_reset(vad_iterator):
     """Мягкий сброс Silero VADIterator без влияния на состояние модели VAD.
