@@ -33,12 +33,27 @@ def audio_processing(device_id, model_name="moonshine/base", translator_settings
     translator = None
     if translator_settings and translator_settings['type'] != 'none':
         try:
+            # Получаем дополнительные параметры для разных типов переводчиков
+            api_key = translator_settings.get('api_key', None)
+            base_url = translator_settings.get('base_url', None)
+            model_size = None
+
+            # Определяем размер модели в зависимости от типа переводчика
+            if translator_settings['type'] == 'm2m100':
+                model_size = translator_settings.get('m2m_model_size', 'small')
+            elif translator_settings['type'] == 'nllb200':
+                model_size = translator_settings.get('nllb_model_size', 'small')
+            else:
+                model_size = 'small'  # Значение по умолчанию
+
             translator = create_translator(
                 translator_settings['type'],
                 translator_settings['source_lang'],
                 translator_settings['target_lang'],
-                translator_settings.get('m2m_model_size', 'small'),
-                translator_settings.get('easynmt_model', 'opus-mt')
+                model_size,
+                translator_settings.get('easynmt_model', 'opus-mt'),
+                api_key,
+                base_url
             )
             gui_queue.put(f"STATUS: Переводчик {translator.name} инициализирован")
         except ImportError as e:
@@ -66,6 +81,7 @@ def audio_processing(device_id, model_name="moonshine/base", translator_settings
         gui_queue.put(f"STATUS: {error_msg}")
         print(error_msg)
         return
+
 
     # Загрузка и инициализация модели Silero VAD для определения голосовой активности
     try:

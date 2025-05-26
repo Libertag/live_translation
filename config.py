@@ -43,5 +43,10 @@ TRANSLATORS = {
     "none": "Без перевода",
     "argos": "Argos Translate (легкий, офлайн)",
     "m2m100": "M2M100 (высокое качество)",
+    "nllb200": "NLLB-200 (Meta, поддержка 200+ языков)",
+    "small100": "SMaLL-100 (компактная модель)",
+    "pymarian": "PyMarian: MarianMT (быстрый перевод)",
+    "gpt4o": "API: GPT-4o (требуется API ключ)",
+    "claude": "API: Claude 3.5 Sonnet (требуется API ключ)",
     "easynmt": "EasyNMT (универсальный)"
 }

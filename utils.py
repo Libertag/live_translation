@@ -89,7 +89,9 @@ def check_dependencies():
     dependencies = {
         "argos": False,
         "m2m100": False,
-        "easynmt": False
+        "easynmt": False,
+        "openai": False,
+        "anthropic": False
     }
 
     # Проверяем наличие argostranslate
@@ -100,7 +102,7 @@ def check_dependencies():
     except ImportError:
         pass
 
-    # Проверяем наличие transformers и torch для M2M100
+    # Проверяем наличие transformers и torch для M2M100, NLLB-200, SMaLL-100 и PyMarian
     try:
         import torch
         importlib.import_module("transformers")
@@ -112,6 +114,20 @@ def check_dependencies():
     try:
         importlib.import_module("easynmt")
         dependencies["easynmt"] = True
+    except ImportError:
+        pass
+
+    # Проверяем наличие openai для GPT-4o
+    try:
+        import openai
+        dependencies["openai"] = True
+    except ImportError:
+        pass
+
+    # Проверяем наличие anthropic для Claude 3.5 Sonnet
+    try:
+        import anthropic
+        dependencies["anthropic"] = True
     except ImportError:
         pass
 

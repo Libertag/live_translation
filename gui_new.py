@@ -372,7 +372,16 @@ class SettingsDialog:
         self.source_lang = tk.StringVar(value="en")
         self.target_lang = tk.StringVar(value="ru")
         self.m2m_model_size = tk.StringVar(value="small")
+        self.nllb_model_size = tk.StringVar(value="small")
         self.easynmt_model = tk.StringVar(value="opus-mt")
+
+        # API ключи
+        self.openai_api_key = tk.StringVar(value="")
+        self.openai_base_url = tk.StringVar(value="")
+        self.anthropic_api_key = tk.StringVar(value="")
+
+        # Загрузка сохраненных API ключей, если они есть
+        self.load_api_keys()
 
         # Результаты выбора
         self.result = {
@@ -384,7 +393,10 @@ class SettingsDialog:
                 "source_lang": "en",
                 "target_lang": "ru",
                 "m2m_model_size": "small",
-                "easynmt_model": "opus-mt"
+                "nllb_model_size": "small",
+                "easynmt_model": "opus-mt",
+                "api_key": "",
+                "base_url": ""
             },
             "cancelled": False
         }
@@ -400,6 +412,30 @@ class SettingsDialog:
 
         # Центрирование окна
         self.center_window()
+
+    def load_api_keys(self):
+        """Загружает сохраненные API ключи, если они есть."""
+        try:
+            import os
+            import json
+
+            config_dir = os.path.join(os.path.expanduser("~"), ".speech_translation")
+            config_file = os.path.join(config_dir, "api_config.json")
+
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+
+                    if "openai_api_key" in config:
+                        self.openai_api_key.set(config["openai_api_key"])
+
+                    if "openai_base_url" in config:
+                        self.openai_base_url.set(config["openai_base_url"])
+
+                    if "anthropic_api_key" in config:
+                        self.anthropic_api_key.set(config["anthropic_api_key"])
+        except Exception as e:
+            print(f"Ошибка при загрузке API ключей: {e}")
 
     def center_window(self):
         """Размещает окно по центру экрана."""
@@ -478,6 +514,18 @@ class SettingsDialog:
         m2m_status = "✅ Установлено" if self.dependencies["m2m100"] else "❌ Не установлено"
         ttk.Label(m2m_frame, text=f"Статус: {m2m_status}", foreground="green" if self.dependencies["m2m100"] else "red").pack(anchor=tk.W, padx=5, pady=2)
 
+        # Дополнительные настройки для NLLB-200
+        nllb_frame = ttk.LabelFrame(translation_frame, text="Настройки NLLB-200")
+        nllb_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        ttk.Radiobutton(nllb_frame, text="Малая модель (600M, быстрее)", variable=self.nllb_model_size, value="small").pack(anchor=tk.W, padx=5, pady=2)
+        ttk.Radiobutton(nllb_frame, text="Средняя модель (1.3B)", variable=self.nllb_model_size, value="medium").pack(anchor=tk.W, padx=5, pady=2)
+        ttk.Radiobutton(nllb_frame, text="Большая модель (3.3B, точнее)", variable=self.nllb_model_size, value="large").pack(anchor=tk.W, padx=5, pady=2)
+
+        # Состояние NLLB
+        nllb_status = "✅ Установлено" if self.dependencies["m2m100"] else "❌ Не установлено"
+        ttk.Label(nllb_frame, text=f"Статус: {nllb_status}", foreground="green" if self.dependencies["m2m100"] else "red").pack(anchor=tk.W, padx=5, pady=2)
+
         # Дополнительные настройки для EasyNMT
         easynmt_frame = ttk.LabelFrame(translation_frame, text="Настройки EasyNMT")
         easynmt_frame.pack(fill=tk.X, padx=5, pady=5)
@@ -500,11 +548,44 @@ class SettingsDialog:
         argos_status = "✅ Установлено" if self.dependencies["argos"] else "❌ Не установлено"
         ttk.Label(argos_frame, text=f"Статус: {argos_status}", foreground="green" if self.dependencies["argos"] else "red").pack(anchor=tk.W, padx=5, pady=2)
 
+        # Настройки API ключей
+        api_frame = ttk.LabelFrame(translation_frame, text="Настройки API")
+        api_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        # OpenAI API ключ
+        openai_key_frame = ttk.Frame(api_frame)
+        openai_key_frame.pack(fill=tk.X, padx=5, pady=5)
+        ttk.Label(openai_key_frame, text="OpenAI API ключ:").pack(side=tk.TOP, anchor=tk.W, padx=(0, 10))
+        openai_key_entry = ttk.Entry(openai_key_frame, textvariable=self.openai_api_key, show="*")
+        openai_key_entry.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+
+        # OpenAI Base URL (для прокси или других провайдеров)
+        openai_url_frame = ttk.Frame(api_frame)
+        openai_url_frame.pack(fill=tk.X, padx=5, pady=5)
+        ttk.Label(openai_url_frame, text="OpenAI Base URL (необязательно):").pack(side=tk.TOP, anchor=tk.W, padx=(0, 10))
+        openai_url_entry = ttk.Entry(openai_url_frame, textvariable=self.openai_base_url)
+        openai_url_entry.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+
+        # Anthropic API ключ
+        anthropic_key_frame = ttk.Frame(api_frame)
+        anthropic_key_frame.pack(fill=tk.X, padx=5, pady=5)
+        ttk.Label(anthropic_key_frame, text="Anthropic API ключ:").pack(side=tk.TOP, anchor=tk.W, padx=(0, 10))
+        anthropic_key_entry = ttk.Entry(anthropic_key_frame, textvariable=self.anthropic_api_key, show="*")
+        anthropic_key_entry.pack(side=tk.TOP, fill=tk.X, expand=True, pady=2)
+
+        # Кнопка для сохранения API ключей
+        save_api_button = ttk.Button(api_frame, text="Сохранить API ключи", command=self.save_api_keys)
+        save_api_button.pack(anchor=tk.W, padx=5, pady=5)
+
         # Обновление состояния элементов управления при изменении типа переводчика
         def update_translator_options(*args):
             is_translator_active = self.translator_type.get() != "none"
             is_m2m100 = self.translator_type.get() == "m2m100"
+            is_nllb200 = self.translator_type.get() == "nllb200"
             is_easynmt = self.translator_type.get() == "easynmt"
+            is_api_gpt4o = self.translator_type.get() == "gpt4o"
+            is_api_claude = self.translator_type.get() == "claude"
+            is_any_api = is_api_gpt4o or is_api_claude
 
             # Обновляем состояние элементов
             for widget in source_frame.winfo_children():
@@ -519,18 +600,59 @@ class SettingsDialog:
                 if isinstance(widget, ttk.Radiobutton):
                     widget.config(state="normal" if is_m2m100 else "disabled")
 
+            for widget in nllb_frame.winfo_children():
+                if isinstance(widget, ttk.Radiobutton):
+                    widget.config(state="normal" if is_nllb200 else "disabled")
+
             for widget in easynmt_model_frame.winfo_children():
                 if isinstance(widget, ttk.Combobox):
                     widget.config(state="readonly" if is_easynmt else "disabled")
+
+            # API элементы управления
+            for widget in openai_key_frame.winfo_children():
+                if isinstance(widget, ttk.Entry):
+                    widget.config(state="normal" if is_api_gpt4o else "disabled")
+
+            for widget in openai_url_frame.winfo_children():
+                if isinstance(widget, ttk.Entry):
+                    widget.config(state="normal" if is_api_gpt4o else "disabled")
+
+            for widget in anthropic_key_frame.winfo_children():
+                if isinstance(widget, ttk.Entry):
+                    widget.config(state="normal" if is_api_claude else "disabled")
+
+            save_api_button.config(state="normal" if is_any_api else "disabled")
 
             # Проверяем зависимости и обновляем предупреждение
             translator_deps_status = ""
             if self.translator_type.get() == "argos" and not self.dependencies["argos"]:
                 translator_deps_status = "⚠️ Argos Translate не установлен. Установите: pip install argostranslate"
-            elif self.translator_type.get() == "m2m100" and not self.dependencies["m2m100"]:
-                translator_deps_status = "⚠️ M2M100 требует дополнительных библиотек. Установите: pip install torch transformers sentencepiece sacremoses"
+            elif self.translator_type.get() in ["m2m100", "nllb200", "small100"] and not self.dependencies["m2m100"]:
+                translator_deps_status = "⚠️ Для этого переводчика требуются дополнительные библиотеки. Установите: pip install torch transformers sentencepiece sacremoses"
+            elif self.translator_type.get() == "pymarian" and not self.dependencies["m2m100"]:
+                translator_deps_status = "⚠️ Для PyMarian требуются дополнительные библиотеки. Установите: pip install torch transformers"
             elif self.translator_type.get() == "easynmt" and not self.dependencies["easynmt"]:
                 translator_deps_status = "⚠️ EasyNMT не установлен. Установите: pip install easynmt"
+            elif self.translator_type.get() == "gpt4o":
+                openai_key = self.openai_api_key.get().strip()
+                if not openai_key:
+                    translator_deps_status = "⚠️ Для GPT-4o требуется API ключ OpenAI. Введите ключ и нажмите 'Сохранить API ключи'."
+                else:
+                    try:
+                        import openai
+                        if not openai.__version__.startswith("1."):
+                            translator_deps_status = "⚠️ Для GPT-4o требуется OpenAI API v1. Установите: pip install --upgrade openai>=1.0.0"
+                    except ImportError:
+                        translator_deps_status = "⚠️ Для GPT-4o требуется библиотека OpenAI. Установите: pip install openai>=1.0.0"
+            elif self.translator_type.get() == "claude":
+                anthropic_key = self.anthropic_api_key.get().strip()
+                if not anthropic_key:
+                    translator_deps_status = "⚠️ Для Claude 3.5 Sonnet требуется API ключ Anthropic. Введите ключ и нажмите 'Сохранить API ключи'."
+                else:
+                    try:
+                        import anthropic
+                    except ImportError:
+                        translator_deps_status = "⚠️ Для Claude 3.5 Sonnet требуется библиотека Anthropic. Установите: pip install anthropic"
 
             if translator_deps_status:
                 self.translator_warning_label.config(text=translator_deps_status, foreground="red")
@@ -552,6 +674,11 @@ class SettingsDialog:
             "none": "Без перевода: отображение текста в исходном виде",
             "argos": "Argos Translate: легкий переводчик для работы офлайн (~100-200 МБ на языковую пару)",
             "m2m100": "M2M100: высококачественный переводчик от Meta AI (~1.8-5 ГБ, требует больше ресурсов)",
+            "nllb200": "NLLB-200: модель от Meta AI с поддержкой 200+ языков (600МБ - 3.3ГБ в зависимости от размера)",
+            "small100": "SMaLL-100: компактная многоязычная модель от Meta (~300МБ)",
+            "pymarian": "PyMarian (MarianMT): быстрая модель для перевода языковых пар (требуются модели Helsinki-NLP)",
+            "gpt4o": "GPT-4o: высококачественный перевод через API OpenAI (требуется API ключ, интернет-соединение)",
+            "claude": "Claude 3.5 Sonnet: высококачественный перевод через API Anthropic (требуется API ключ, интернет-соединение)",
             "easynmt": "EasyNMT: универсальный переводчик с поддержкой различных моделей"
         }
 
@@ -633,8 +760,11 @@ class SettingsDialog:
         deps_text = (
             "Для работы переводчиков требуются дополнительные библиотеки:\n\n"
             "• Argos Translate: pip install argostranslate\n"
-            "• M2M100: pip install torch transformers sentencepiece sacremoses\n"
-            "• EasyNMT: pip install easynmt"
+            "• M2M100/NLLB-200/SMaLL-100: pip install torch transformers sentencepiece sacremoses\n"
+            "• PyMarian: pip install torch transformers\n"
+            "• EasyNMT: pip install easynmt\n"
+            "• GPT-4o: pip install openai>=1.0.0\n"
+            "• Claude 3.5 Sonnet: pip install anthropic"
         )
 
         ttk.Label(deps_frame, text=deps_text, wraplength=550, justify="left").pack(fill=tk.X, padx=5, pady=5)
@@ -658,8 +788,48 @@ class SettingsDialog:
         self.font_size_label.config(text=str(size))
         self.preview_text.config(font=("Helvetica", size))
 
+    def save_api_keys(self):
+        """Сохраняет API ключи в конфигурационный файл."""
+        try:
+            from translators import APITranslator
+
+            openai_key = self.openai_api_key.get().strip()
+            openai_url = self.openai_base_url.get().strip()
+            anthropic_key = self.anthropic_api_key.get().strip()
+
+            # Создаем словарь только с непустыми значениями
+            keys_to_save = {}
+            if openai_key:
+                keys_to_save["openai_api_key"] = openai_key
+            if openai_url:
+                keys_to_save["openai_base_url"] = openai_url
+            if anthropic_key:
+                keys_to_save["anthropic_api_key"] = anthropic_key
+
+            # Сохраняем ключи
+            if keys_to_save:
+                APITranslator.save_api_keys(**keys_to_save)
+                messagebox.showinfo("Успех", "API ключи успешно сохранены!")
+            else:
+                messagebox.showwarning("Предупреждение", "Нет ключей для сохранения!")
+
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось сохранить API ключи: {str(e)}")
+
     def submit(self):
         """Сохраняет выбранные настройки и закрывает окно."""
+        # Сохраняем API ключи, если они были введены
+        self.save_api_keys()
+
+        api_key = None
+        base_url = None
+
+        if self.translator_type.get() == "gpt4o":
+            api_key = self.openai_api_key.get().strip()
+            base_url = self.openai_base_url.get().strip() or None
+        elif self.translator_type.get() == "claude":
+            api_key = self.anthropic_api_key.get().strip()
+
         self.result = {
             "device": self.selected_device.get(),
             "font_size": self.font_size.get(),
@@ -669,7 +839,10 @@ class SettingsDialog:
                 "source_lang": self.source_lang.get(),
                 "target_lang": self.target_lang.get(),
                 "m2m_model_size": self.m2m_model_size.get(),
-                "easynmt_model": self.easynmt_model.get()
+                "nllb_model_size": self.nllb_model_size.get(),
+                "easynmt_model": self.easynmt_model.get(),
+                "api_key": api_key,
+                "base_url": base_url
             },
             "cancelled": False
         }
@@ -679,7 +852,6 @@ class SettingsDialog:
         """Отменяет выбор и закрывает окно."""
         self.result["cancelled"] = True
         self.root.destroy()
-
 
 class CaptionGUI:
     """Класс для создания графического интерфейса субтитров."""
